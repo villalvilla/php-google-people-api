@@ -67,25 +67,28 @@ class GooglePeople
 
         $contacts = [];
 
-        foreach($responseObj->connections as $connection) {
-            $contacts[] = $this->convertResponseConnectionToContact($connection);
-        }
-
-        while(isset($responseObj->nextPageToken)) {
-
-            $url = self::PEOPLE_BASE_URL.'people/me/connections?personFields='.implode(',', self::PERSON_FIELDS).'&pageSize=2000&pageToken='.$responseObj->nextPageToken;
-
-            $response = $this->googleOAuth2Handler->performRequest('GET', $url);
-            $body = (string) $response->getBody();
-
-            if ($response->getStatusCode()!=200) {
-                throw new Exception($body);
-            }
-
-            $responseObj = json_decode($body);
-
+        if (isset($responseObj) && is_object($responseObj) && is_array($responseObj->connections)) {
+        
             foreach($responseObj->connections as $connection) {
                 $contacts[] = $this->convertResponseConnectionToContact($connection);
+            }
+
+            while(isset($responseObj->nextPageToken)) {
+
+                $url = self::PEOPLE_BASE_URL.'people/me/connections?personFields='.implode(',', self::PERSON_FIELDS).'&pageSize=2000&pageToken='.$responseObj->nextPageToken;
+
+                $response = $this->googleOAuth2Handler->performRequest('GET', $url);
+                $body = (string) $response->getBody();
+
+                if ($response->getStatusCode()!=200) {
+                    throw new Exception($body);
+                }
+
+                $responseObj = json_decode($body);
+
+                foreach($responseObj->connections as $connection) {
+                    $contacts[] = $this->convertResponseConnectionToContact($connection);
+                }
             }
         }
 
